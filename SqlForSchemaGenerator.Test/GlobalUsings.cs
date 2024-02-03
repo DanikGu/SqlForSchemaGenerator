@@ -1,0 +1,11 @@
+global using Microsoft.VisualStudio.TestTools.UnitTesting;
+global using CliWrap;
+global using System.Text;
+global using Npgsql;
+global using System.ComponentModel.DataAnnotations;
+global using System.Diagnostics;
+global using System.Net.NetworkInformation;
+global using System.Net;
+global using System.Xml.Linq;
+global using SqlForSchemaGenrator.Postgres;
+global using SqlForSchemaGenerator.Core;

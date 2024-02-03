@@ -3,11 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.8.34330.188
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SqlForSchemaGenerator.Core", "..\SqlForSchemaGenerator.Core\SqlForSchemaGenerator.Core.csproj", "{81990390-3861-4011-B9EE-0C51D126507E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SqlForSchemaGenerator.Core", "SqlForSchemaGenerator.Core\SqlForSchemaGenerator.Core.csproj", "{CA5E12F0-0964-4E94-9ADF-59261DC9D740}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SqlForSchemaGenrator.Postgres", "..\SqlForSchemaGenrator.Postgres\SqlForSchemaGenrator.Postgres.csproj", "{09F2A3C9-0DC8-4EE7-A9D7-0D0962FC1FEF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SqlForSchemaGenerator.Test", "SqlForSchemaGenerator.Test\SqlForSchemaGenerator.Test.csproj", "{DCA70AC7-5A1B-48DE-8398-57C38E02802C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SqlForSchemaGenerator.Test", "..\SqlForSchemaGenerator.Test\SqlForSchemaGenerator.Test.csproj", "{9EF927C7-4DCC-465B-8F9E-837D71642875}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SqlForSchemaGenrator.Postgres", "SqlForSchemaGenrator.Postgres\SqlForSchemaGenrator.Postgres.csproj", "{342812A3-10DD-4705-A4AE-37F0DB8310A6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,18 +15,18 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{81990390-3861-4011-B9EE-0C51D126507E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{81990390-3861-4011-B9EE-0C51D126507E}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{81990390-3861-4011-B9EE-0C51D126507E}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{81990390-3861-4011-B9EE-0C51D126507E}.Release|Any CPU.Build.0 = Release|Any CPU
-		{09F2A3C9-0DC8-4EE7-A9D7-0D0962FC1FEF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{09F2A3C9-0DC8-4EE7-A9D7-0D0962FC1FEF}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{09F2A3C9-0DC8-4EE7-A9D7-0D0962FC1FEF}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{09F2A3C9-0DC8-4EE7-A9D7-0D0962FC1FEF}.Release|Any CPU.Build.0 = Release|Any CPU
-		{9EF927C7-4DCC-465B-8F9E-837D71642875}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{9EF927C7-4DCC-465B-8F9E-837D71642875}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{9EF927C7-4DCC-465B-8F9E-837D71642875}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{9EF927C7-4DCC-465B-8F9E-837D71642875}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CA5E12F0-0964-4E94-9ADF-59261DC9D740}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CA5E12F0-0964-4E94-9ADF-59261DC9D740}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CA5E12F0-0964-4E94-9ADF-59261DC9D740}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CA5E12F0-0964-4E94-9ADF-59261DC9D740}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DCA70AC7-5A1B-48DE-8398-57C38E02802C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DCA70AC7-5A1B-48DE-8398-57C38E02802C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DCA70AC7-5A1B-48DE-8398-57C38E02802C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DCA70AC7-5A1B-48DE-8398-57C38E02802C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{342812A3-10DD-4705-A4AE-37F0DB8310A6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{342812A3-10DD-4705-A4AE-37F0DB8310A6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{342812A3-10DD-4705-A4AE-37F0DB8310A6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{342812A3-10DD-4705-A4AE-37F0DB8310A6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
