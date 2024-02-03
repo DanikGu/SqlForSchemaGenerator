@@ -1,0 +1,37 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.8.34330.188
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SqlForSchemaGenerator.Core", "..\SqlForSchemaGenerator.Core\SqlForSchemaGenerator.Core.csproj", "{81990390-3861-4011-B9EE-0C51D126507E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SqlForSchemaGenrator.Postgres", "..\SqlForSchemaGenrator.Postgres\SqlForSchemaGenrator.Postgres.csproj", "{09F2A3C9-0DC8-4EE7-A9D7-0D0962FC1FEF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SqlForSchemaGenerator.Test", "..\SqlForSchemaGenerator.Test\SqlForSchemaGenerator.Test.csproj", "{9EF927C7-4DCC-465B-8F9E-837D71642875}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{81990390-3861-4011-B9EE-0C51D126507E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{81990390-3861-4011-B9EE-0C51D126507E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{81990390-3861-4011-B9EE-0C51D126507E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{81990390-3861-4011-B9EE-0C51D126507E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{09F2A3C9-0DC8-4EE7-A9D7-0D0962FC1FEF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{09F2A3C9-0DC8-4EE7-A9D7-0D0962FC1FEF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{09F2A3C9-0DC8-4EE7-A9D7-0D0962FC1FEF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{09F2A3C9-0DC8-4EE7-A9D7-0D0962FC1FEF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9EF927C7-4DCC-465B-8F9E-837D71642875}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9EF927C7-4DCC-465B-8F9E-837D71642875}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9EF927C7-4DCC-465B-8F9E-837D71642875}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9EF927C7-4DCC-465B-8F9E-837D71642875}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {10676583-373F-451A-A7EB-CAD42B268A08}
+	EndGlobalSection
+EndGlobal
