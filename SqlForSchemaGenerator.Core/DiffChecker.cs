@@ -1,4 +1,5 @@
-﻿using SqlForSchemaGenerator.Core.Models;
+﻿using SqlForSchemaGenerator.Core.Interfaces;
+using SqlForSchemaGenerator.Core.Models;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http.Headers;
@@ -11,12 +12,14 @@ namespace SqlForSchemaGenerator.Core
 {
     public class DiffChecker
     {
-        private DbStructure _currentStructure { get; set; }
-        private DbStructure _targetStructure { get; set; }
-        public DiffChecker(DbStructure currentStructure, DbStructure targetStructure)
+        private readonly ISqlTypesConverter _sqlTypesConverter;
+        private readonly DbStructure _currentStructure;
+        private readonly DbStructure _targetStructure;
+        public DiffChecker(DbStructure currentStructure, DbStructure targetStructure, ISqlTypesConverter sqlTypesConverter)
         {
             _currentStructure = currentStructure;
             _targetStructure = targetStructure;
+            _sqlTypesConverter = sqlTypesConverter;
         }
         //changing of relationship is not considered and if it happened such case will not have any affect on actions 
         //supposed that old constraint deleted and new created
@@ -65,8 +68,8 @@ namespace SqlForSchemaGenerator.Core
                             {
                                 FieldInitialSize = x.Size,
                                 FieldTargetSize = x.Size,
-                                FieldInitialType = x.Type,
-                                FieldTargetType = x.Type,
+                                FieldInitialType = _sqlTypesConverter.GetSqlType(x.Type),
+                                FieldTargetType = _sqlTypesConverter.GetSqlType(x.Type),
                                 TableName = table.Key,
                                 IsPrimaryKey = x.IsPrimaryKey
                             }
@@ -87,8 +90,8 @@ namespace SqlForSchemaGenerator.Core
                             Props = new ActionFieldProps() {
                                 FieldInitialSize = x.Size,
                                 FieldTargetSize = x.Size,
-                                FieldInitialType = x.Type,
-                                FieldTargetType  = x.Type,
+                                FieldInitialType = _sqlTypesConverter.GetSqlType(x.Type),
+                                FieldTargetType  = _sqlTypesConverter.GetSqlType(x.Type),
                                 TableName = table.Key,
                                 IsPrimaryKey = x.IsPrimaryKey
                             }
@@ -105,8 +108,8 @@ namespace SqlForSchemaGenerator.Core
                             ObjectName = x.Name,
                             Props = new ActionFieldProps()
                             {
-                                FieldInitialType = x.Type,
-                                FieldTargetType = x.Type,
+                                FieldInitialType = _sqlTypesConverter.GetSqlType(x.Type),
+                                FieldTargetType = _sqlTypesConverter.GetSqlType(x.Type),
                                 TableName = table.Key,
                                 IsPrimaryKey = x.IsPrimaryKey
                             }
@@ -129,8 +132,8 @@ namespace SqlForSchemaGenerator.Core
                         {
                             FieldInitialSize = field.Size,
                             FieldTargetSize = targetField.Size,
-                            FieldInitialType = field.Type,
-                            FieldTargetType = targetField.Type,
+                            FieldInitialType = _sqlTypesConverter.GetSqlType(field.Type),
+                            FieldTargetType = _sqlTypesConverter.GetSqlType(targetField.Type),
                             TableName = table.Key,
                             IsPrimaryKey = targetField.IsPrimaryKey,
                             WasPrimaryKey = field.IsPrimaryKey

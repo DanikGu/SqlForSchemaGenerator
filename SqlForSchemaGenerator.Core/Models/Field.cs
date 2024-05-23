@@ -6,9 +6,9 @@ namespace SqlForSchemaGenerator.Core.Models;
 public class Field
 {
     [DataMember]
-    public string Name { get; set; }
+    public string? Name { get; set; }
     [DataMember]
-    public string Type { get; set; }
+    public SystemTypesEnum Type { get; set; }
     [DataMember]
     public int? Size{ get; set; }
     [DataMember]

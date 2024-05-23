@@ -48,36 +48,42 @@ namespace SqlForSchemaGenerator.Test
             //setup
             var sourceSchemaConnStr = $"Host=localhost;Port={port};Database={secondDbName};Username=postgres;Password=postgres";
             var targetSchemaConnStr = $"Host=localhost;Port={port};Database={firstDbName};Username=postgres;Password=postgres";
-            var builder = new PostgresDbStructureBuilder(sourceSchemaConnStr);
-            var targetBuilder = new PostgresDbStructureBuilder(targetSchemaConnStr);
-            var schema = builder.Build();
-            var targetSchema = targetBuilder.Build();
-            var checker = new DiffChecker(schema, targetSchema);
-            var actions = checker.GetActionsToAchiveTargetStructure();
-
-            //act
-            var sqlGenerator = new SqlGenerator();
-            var resultSql = sqlGenerator.GenerateSqlFromActions(actions.ToArray());
-            using (var conn = new NpgsqlConnection(sourceSchemaConnStr))
+            using (var firstDbConnection = new NpgsqlConnection(sourceSchemaConnStr))
+            using (var secondDbConnection = new NpgsqlConnection(targetSchemaConnStr))
             {
-                conn.Open();
-                
-                using (var command = new NpgsqlCommand(resultSql, conn))
+                firstDbConnection.Open();
+                secondDbConnection.Open();
+                var sqlTypesConvertor = new PostgresSqlTypeConvertor();
+                var builder = new PostgresDbStructureBuilder(firstDbConnection, sqlTypesConvertor);
+                var targetBuilder = new PostgresDbStructureBuilder(secondDbConnection, sqlTypesConvertor);
+                var schema = builder.Build();
+                var targetSchema = targetBuilder.Build();
+                var checker = new DiffChecker(schema, targetSchema, sqlTypesConvertor);
+                var actions = checker.GetActionsToAchiveTargetStructure();
+
+                //act
+                var sqlGenerator = new PostgresSqlGenerator(sqlTypesConvertor);
+                var resultSql = sqlGenerator.GenerateSqlFromActions(actions.ToArray());
+                using (var conn = new NpgsqlConnection(sourceSchemaConnStr))
                 {
-                    command.ExecuteNonQuery();
+                    conn.Open();
+
+                    using (var command = new NpgsqlCommand(resultSql, conn))
+                    {
+                        command.ExecuteNonQuery();
+                    }
+
                 }
-                
+
+                //assert
+                builder = new PostgresDbStructureBuilder(firstDbConnection, sqlTypesConvertor);
+                targetBuilder = new PostgresDbStructureBuilder(secondDbConnection, sqlTypesConvertor);
+                schema = builder.Build();
+                targetSchema = targetBuilder.Build();
+                checker = new DiffChecker(schema, targetSchema, sqlTypesConvertor);
+                actions = checker.GetActionsToAchiveTargetStructure();
+                Assert.IsFalse(actions.Any());
             }
-
-            //assert
-            builder = new PostgresDbStructureBuilder(sourceSchemaConnStr);
-            targetBuilder = new PostgresDbStructureBuilder(targetSchemaConnStr);
-            schema = builder.Build();
-            targetSchema = targetBuilder.Build();
-            checker = new DiffChecker(schema, targetSchema);
-            actions = checker.GetActionsToAchiveTargetStructure();
-
-            Assert.IsFalse(actions.Any());
         }
         private int GetEmptyPort() 
         {
@@ -102,7 +108,7 @@ namespace SqlForSchemaGenerator.Test
         }
         private void CreateDatabase(string dbName, int port)
         {
-            Thread.Sleep(1000);
+            Thread.Sleep(5000);
             string connString = $"Host=localhost;Port={port};Username=postgres;Password=postgres;Database=postgres";
             using (var conn = new NpgsqlConnection(connString))
             {
@@ -149,7 +155,7 @@ namespace SqlForSchemaGenerator.Test
                     discount DECIMAL(10, 2) DEFAULT 0, -- New field for discount
                     stock_quantity INT NOT NULL,
                     supplier_id INT, -- New direct relationship to suppliers
-                    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     FOREIGN KEY (supplier_id) REFERENCES suppliers(supplier_id) -- New FK relationship
                 );
 
@@ -174,7 +180,7 @@ namespace SqlForSchemaGenerator.Test
                     order_id SERIAL PRIMARY KEY,
                     order_status VARCHAR(50) NOT NULL,
                     total_price DECIMAL(10, 2) NOT NULL,
-                    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 );
 
                 -- Order Items table
@@ -218,7 +224,7 @@ namespace SqlForSchemaGenerator.Test
                     user_id INT NOT NULL,
                     rating INT NOT NULL,
                     comment TEXT,
-                    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     FOREIGN KEY (product_id) REFERENCES products(product_id) ON DELETE CASCADE,
                     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
                 );
@@ -230,7 +236,7 @@ namespace SqlForSchemaGenerator.Test
                     log_id SERIAL PRIMARY KEY,
                     product_id INT NOT NULL,
                     quantity_change INT NOT NULL,
-                    change_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                    change_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     reason TEXT,
                     FOREIGN KEY (product_id) REFERENCES products(product_id) ON DELETE CASCADE
                 );
@@ -247,7 +253,7 @@ namespace SqlForSchemaGenerator.Test
                 CREATE TABLE wishlist_items (
                     wishlist_id INT NOT NULL,
                     product_id INT NOT NULL,
-                    added_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                    added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     PRIMARY KEY (wishlist_id, product_id),
                     FOREIGN KEY (wishlist_id) REFERENCES wishlists(wishlist_id) ON DELETE CASCADE,
                     FOREIGN KEY (product_id) REFERENCES products(product_id) ON DELETE RESTRICT
@@ -257,8 +263,8 @@ namespace SqlForSchemaGenerator.Test
                 CREATE TABLE shipping_info (
                     shipping_id SERIAL PRIMARY KEY,
                     order_id INT NOT NULL,
-                    shipping_date TIMESTAMP WITH TIME ZONE,
-                    estimated_arrival TIMESTAMP WITH TIME ZONE,
+                    shipping_date TIMESTAMP,
+                    estimated_arrival TIMESTAMP,
                     status VARCHAR(255) NOT NULL,
                     FOREIGN KEY (order_id) REFERENCES orders(order_id) ON DELETE CASCADE
                 );
@@ -283,7 +289,7 @@ namespace SqlForSchemaGenerator.Test
                         username VARCHAR(255) UNIQUE NOT NULL,
                         email VARCHAR(255) UNIQUE NOT NULL,
                         password VARCHAR(255) NOT NULL,
-                        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                     );
 
                     -- Products table
@@ -293,7 +299,7 @@ namespace SqlForSchemaGenerator.Test
                         description TEXT,
                         price DECIMAL(10, 2) NOT NULL,
                         stock_quantity INT NOT NULL,
-                        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                     );
 
                     -- Categories table
@@ -318,7 +324,7 @@ namespace SqlForSchemaGenerator.Test
                         user_id INT NOT NULL,
                         order_status VARCHAR(50) NOT NULL,
                         total_price DECIMAL(10, 2) NOT NULL,
-                        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                         FOREIGN KEY (user_id) REFERENCES users(user_id)
                     );
 
@@ -362,7 +368,7 @@ namespace SqlForSchemaGenerator.Test
                         user_id INT NOT NULL,
                         rating INT NOT NULL,
                         comment TEXT,
-                        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                         FOREIGN KEY (product_id) REFERENCES products(product_id) ON DELETE CASCADE,
                         FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
                     );
@@ -391,7 +397,7 @@ namespace SqlForSchemaGenerator.Test
                         log_id SERIAL PRIMARY KEY,
                         product_id INT NOT NULL,
                         quantity_change INT NOT NULL,
-                        change_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                        change_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                         reason TEXT,
                         FOREIGN KEY (product_id) REFERENCES products(product_id) ON DELETE CASCADE
                     );
@@ -408,7 +414,7 @@ namespace SqlForSchemaGenerator.Test
                     CREATE TABLE wishlist_items (
                         wishlist_id INT NOT NULL,
                         product_id INT NOT NULL,
-                        added_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                        added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                         PRIMARY KEY (wishlist_id, product_id),
                         FOREIGN KEY (wishlist_id) REFERENCES wishlists(wishlist_id) ON DELETE CASCADE,
                         FOREIGN KEY (product_id) REFERENCES products(product_id) ON DELETE RESTRICT
@@ -419,8 +425,8 @@ namespace SqlForSchemaGenerator.Test
                         shipping_id SERIAL PRIMARY KEY,
                         order_id INT NOT NULL,
                         address_id INT NOT NULL,
-                        shipping_date TIMESTAMP WITH TIME ZONE,
-                        estimated_arrival TIMESTAMP WITH TIME ZONE,
+                        shipping_date TIMESTAMP,
+                        estimated_arrival TIMESTAMP ,
                         status VARCHAR(255) NOT NULL,
                         FOREIGN KEY (order_id) REFERENCES orders(order_id) ON DELETE CASCADE,
                         FOREIGN KEY (address_id) REFERENCES addresses(address_id) ON DELETE RESTRICT

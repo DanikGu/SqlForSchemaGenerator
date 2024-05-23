@@ -1,87 +1,96 @@
-﻿using Npgsql;
+﻿using SqlForSchemaGenerator.Core.Interfaces;
 using SqlForSchemaGenerator.Core.Models;
-using System.ComponentModel.DataAnnotations;
-using System.ServiceModel;
+using System.Data;
 
 namespace SqlForSchemaGenrator.Postgres;
 
-public class PostgresDbStructureBuilder
+public class PostgresDbStructureBuilder : IDbStructureBuilder
 {
 
-    private readonly string _connectionString;
+    //private readonly string _connectionString;
     private DbStructure _dbStructure;
-    public PostgresDbStructureBuilder(string connectionString)
+    private readonly IDbConnection _connnection;
+    private readonly ISqlTypesConverter _sqlTypesConverter;
+
+    public PostgresDbStructureBuilder(IDbConnection connection, ISqlTypesConverter sqlTypesConverter)
     {
-        if (string.IsNullOrEmpty(connectionString))
-        {
-            throw new ArgumentException($"'{nameof(connectionString)}' cannot be null or empty.", nameof(connectionString));
-        }
-        _connectionString = connectionString;
+        _connnection = connection;
+        _sqlTypesConverter = sqlTypesConverter;
     }
-    public DbStructure Build() 
+    public DbStructure Build()
     {
         _dbStructure = new DbStructure();
-        using (var connection = NpgsqlDataSource.Create(_connectionString)) 
-        {
-            BuildTables(connection);
 
-            BuildFields(connection);
+        BuildTables();
 
-            BuildRelationship(connection);
-        }
+        BuildFields();
+
+        BuildRelationship();
+
         return _dbStructure;
     }
-    private void BuildTables(NpgsqlDataSource connection)
+    private void BuildTables()
     {
         var query = TABLES_QUERY;
         var tables = new List<Table>();
-        using (var command = connection.CreateCommand(query))
-        using (var reader = command.ExecuteReader())
+
+        using (var command = _connnection.CreateCommand())
         {
-            while (reader.Read())
+            command.CommandText = query;
+            using (var reader = command.ExecuteReader())
             {
-                var table = new Table();
-                table.Name = reader.GetFieldValue<string>(0);
-                tables.Add(table);
+                while (reader.Read())
+                {
+                    var table = new Table();
+                    table.Name = reader.GetString(0);
+                    tables.Add(table);
+                }
             }
         }
+
         _dbStructure.Tables = tables.ToArray();
     }
-    private void BuildFields(NpgsqlDataSource connection)
+    private void BuildFields()
     {
         foreach (var table in _dbStructure.Tables)
         {
             var fields = new List<Field>();
             var query = GetQueryToListFields(table.Name);
-            using (var command = connection.CreateCommand(query))
-            using (var reader = command.ExecuteReader())
+            using (var command = _connnection.CreateCommand())
             {
-                while (reader.Read())
+                command.CommandText = query;
+                using (var reader = command.ExecuteReader())
                 {
-                    var field = new Field();
-                    field.Name = reader["column_name"] as string;
-                    field.Type = reader["udt_name"] as string;
-                    field.Size = reader["character_maximum_length"] as int?;
-                    fields.Add(field);
+                    while (reader.Read())
+                    {
+                        var field = new Field();
+                        field.Name = reader["column_name"] as string;
+                        field.Type = _sqlTypesConverter.GetSystemType(reader["udt_name"] as string);
+                        field.Size = reader["character_maximum_length"] as int?;
+                        fields.Add(field);
+                    }
                 }
             }
             table.Fields = fields.ToArray();
             query = GetPrimaryKeyForTableQuery(table.Name);
-            using (var command = connection.CreateCommand(query))
-            using (var reader = command.ExecuteReader())
+            using (var command = _connnection.CreateCommand())
             {
-                while (reader.Read())
+                command.CommandText = query;
+                using (var reader = command.ExecuteReader())
                 {
-                    string columnName = reader["key_column"] as string;
-                    var field = fields.First(x => x.Name == columnName);
-                    field.IsPrimaryKey = true;
+                    while (reader.Read())
+                    {
+                        string columnName = reader["key_column"] as string;
+                        var field = fields.First(x => x.Name == columnName);
+                        field.IsPrimaryKey = true;
+                    }
                 }
             }
 
         }
 
     }
-    private void BuildRelationship(NpgsqlDataSource connection)
+    private void BuildRelationship()
     {
         var tablesDictionary = _dbStructure.Tables.ToDictionary(x => x.Name, y => y);
         foreach (var table in _dbStructure.Tables)
@@ -89,41 +98,47 @@ public class PostgresDbStructureBuilder
             var fieldsDictionary = table.Fields.ToDictionary(x => x.Name, y => y);
             var relationships = new List<Relationship>();
             var query = GetQueryToListConstraints(table.Name);
-            using (var command = connection.CreateCommand(query))
-            using (var reader = command.ExecuteReader())
+            using (var command = _connnection.CreateCommand())
             {
-                while (reader.Read())
-                {
-                    var type = reader["constraint_type"] as string; 
-                    if (type != "FOREIGN KEY") 
-                    {
-                        continue;
-                    }
-                    var relationship = new Relationship();
-                    relationship.ConstraintName = reader["constraint_name"] as string;
-                    relationships.Add(relationship);
-                }
-            }
-            table.Relationships = relationships.ToArray();
-            foreach (var relationship in table.Relationships) 
-            {
-
-                var queryToGetConstraintDetail = GetQueryToConstraintsDeteails(table.Name, relationship.ConstraintName);
-                using (var command = connection.CreateCommand(queryToGetConstraintDetail))
+                command.CommandText = query;
                 using (var reader = command.ExecuteReader())
                 {
                     while (reader.Read())
                     {
-                        var columnName = reader["column_name"] as string ?? throw new ArgumentException();
-                        var referencesTableName = reader["references_table"] as string ?? throw new ArgumentException();
-                        var referencedField = reader["references_field"] as string ?? throw new ArgumentException();
+                        var type = reader["constraint_type"] as string;
+                        if (type != "FOREIGN KEY")
+                        {
+                            continue;
+                        }
+                        var relationship = new Relationship();
+                        relationship.ConstraintName = reader["constraint_name"] as string;
+                        relationships.Add(relationship);
+                    }
+                }
+            }
+            table.Relationships = relationships.ToArray();
+            foreach (var relationship in table.Relationships)
+            {
 
-                        var referencedTable = tablesDictionary[referencesTableName];
-                        var column = fieldsDictionary[columnName];
-                        relationship.Table = table;
-                        relationship.Field = column;
-                        relationship.ReferencedTable = referencedTable;
-                        relationship.ReferencedField = referencedTable.Fields.First(x => x.Name == referencedField);
+                var queryToGetConstraintDetail = GetQueryToConstraintsDeteails(table.Name, relationship.ConstraintName);
+                using (var command = _connnection.CreateCommand())
+                {
+                    command.CommandText = queryToGetConstraintDetail;
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            var columnName = reader["column_name"] as string ?? throw new ArgumentException();
+                            var referencesTableName = reader["references_table"] as string ?? throw new ArgumentException();
+                            var referencedField = reader["references_field"] as string ?? throw new ArgumentException();
+
+                            var referencedTable = tablesDictionary[referencesTableName];
+                            var column = fieldsDictionary[columnName];
+                            relationship.Table = table;
+                            relationship.Field = column;
+                            relationship.ReferencedTable = referencedTable;
+                            relationship.ReferencedField = referencedTable.Fields.First(x => x.Name == referencedField);
+                        }
                     }
                 }
             }
@@ -146,7 +161,7 @@ public class PostgresDbStructureBuilder
             AND table_name !~ '^pg_';
         """;
 
-    private string GetQueryToListFields(string table) 
+    private string GetQueryToListFields(string table)
     {
         return $"""
             SELECT 

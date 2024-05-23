@@ -11,11 +11,13 @@ using System.Threading.Tasks;
 
 namespace SqlForSchemaGenrator.Postgres
 {
-    public class SqlGenerator: ISqlGenerator
+    public class PostgresSqlGenerator: ISqlGenerator
     {
-        public SqlGenerator()
+        private readonly ISqlTypesConverter _sqlTypesConverter;
+
+        public PostgresSqlGenerator(ISqlTypesConverter sqlTypesConverter)
         {
-            
+            _sqlTypesConverter = sqlTypesConverter;
         }
         public string GetSql(DiffChecker checker)
         {
@@ -29,6 +31,7 @@ namespace SqlForSchemaGenrator.Postgres
         private string SqlFromAction(DBAction dBAction) 
         {
             var result = string.Empty;
+            dBAction.ObjectName = WrapObjectName(dBAction.ObjectName);
             switch (dBAction.Type) 
             {
                 case DBActionType.CreateTable:
@@ -39,6 +42,7 @@ namespace SqlForSchemaGenrator.Postgres
                     if (dBAction.Props is ActionFieldProps fieldProps1)
                     {
                         var fieldSizeStr = fieldProps1.FieldInitialSize is null ? "" : $"({fieldProps1.FieldInitialSize})";
+                        fieldProps1.TableName = WrapObjectName(fieldProps1.TableName);
                         result = $"ALTER TABLE {fieldProps1.TableName} ADD COLUMN {dBAction.ObjectName} {fieldProps1.FieldInitialType}{fieldSizeStr};";
                         if (fieldProps1.IsPrimaryKey)
                         {
@@ -53,6 +57,7 @@ namespace SqlForSchemaGenrator.Postgres
                         if (fieldProps2.FieldInitialType != fieldProps2.FieldTargetType || fieldProps2.FieldInitialSize != fieldProps2.FieldTargetSize)
                         {
                             var fieldSizeStr = fieldProps2.FieldTargetSize is null ? "" : $"({fieldProps2.FieldTargetSize})";
+                            fieldProps2.TableName = WrapObjectName(fieldProps2.TableName);
                             result = $"ALTER TABLE {fieldProps2.TableName} ALTER COLUMN {dBAction.ObjectName} TYPE {fieldProps2.FieldTargetType}{fieldSizeStr};";
                         }
                         if (fieldProps2.IsPrimaryKey != fieldProps2.WasPrimaryKey)
@@ -65,19 +70,27 @@ namespace SqlForSchemaGenrator.Postgres
                 case DBActionType.CreateRelationship:
                     if (dBAction.Props is ActionRelationshipProps relationshipProps)
                     {
-                        result = $"ALTER TABLE {relationshipProps.TableName} ADD FOREIGN KEY ({relationshipProps.TableFieldName}) REFERENCES {relationshipProps.ReferencedTableName}({relationshipProps.ReferencedTableFieldName});";
+                        relationshipProps.TableName = WrapObjectName(relationshipProps.TableName);
+                        relationshipProps.TableFieldName = WrapObjectName(relationshipProps.TableFieldName);
+                        relationshipProps.ReferencedTableName = WrapObjectName(relationshipProps.ReferencedTableName);
+                        relationshipProps.ReferencedTableFieldName = WrapObjectName(relationshipProps.ReferencedTableFieldName);
+                        result = $"ALTER TABLE {relationshipProps.TableName} ADD FOREIGN KEY ({relationshipProps.TableFieldName}) " +
+                            $"REFERENCES {relationshipProps.ReferencedTableName}({relationshipProps.ReferencedTableFieldName});";
                     }
                     break;
 
                 case DBActionType.DeleteRelationship:
                     if (dBAction.Props is ActionRelationshipProps relationshipProps2) 
                     {
+                        relationshipProps2.TableName = WrapObjectName(relationshipProps2.TableName);
                         result = $"ALTER TABLE {relationshipProps2.TableName} DROP CONSTRAINT {dBAction.ObjectName};";
                     }
                     break;
 
                 case DBActionType.DeleteField:
-                    result = $"ALTER TABLE {(dBAction.Props is ActionFieldProps fieldPropsDel ?  fieldPropsDel.TableName : throw new ArgumentException())} " +
+                    
+                    result = $"ALTER TABLE {(dBAction.Props is ActionFieldProps fieldPropsDel ? WrapObjectName(fieldPropsDel.TableName) :
+                        throw new ArgumentException())} " +
                         $"DROP COLUMN {dBAction.ObjectName};";
                     break;
 
@@ -87,6 +100,11 @@ namespace SqlForSchemaGenrator.Postgres
 
             }
             return result;
+        }
+        private string WrapObjectName(string objectName) 
+        {
+            objectName = $"\"{objectName}\"";
+            return objectName;
         }
 
     }
