@@ -1,4 +1,4 @@
 # SqlForSchemaGenerator
-Simple project for database schema changes sql gerneration,  I want to create app where I can change db structure visually, so I create this project
+Simple project for database schema changes sql gerneration, Used To Update Database Structure For https://github.com/DanikGu/EndearingApp
 # Tests 
 For tests to run docker need to be installed and added to PATH
